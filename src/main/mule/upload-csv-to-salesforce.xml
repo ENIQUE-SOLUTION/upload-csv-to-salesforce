@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<file:config name="File_Config" doc:name="File Config" doc:id="5c032c4f-e1c2-433f-91db-5e73270bab0c" >
+		<file:connection workingDir="D:\File" />
+	</file:config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="147f97bc-3eb4-44be-8ef1-17d33da5fcd4" >
+		<salesforce:basic-connection username="amhatre@eniquesolutions.com" password="akshay12345" securityToken="ryT8AgtDl6SVd10HwDCXhVFOn" />
+	</salesforce:sfdc-config>
+	<flow name="upload-csv-to-salesforceFlow" doc:id="c9f18519-f112-4394-a690-2de560efeb68" >
+		<file:listener doc:id="16b5e24a-7263-4e95-8909-49689cbfa330" config-ref="File_Config" directory="D:\File\upload-file-here" autoDelete="true">
+			<scheduling-strategy >
+				<fixed-frequency frequency="20000" />
+			</scheduling-strategy>
+		</file:listener>
+		<ee:transform doc:name="Transform Message" doc:id="fff5f082-06d9-4809-ae54-e65a5f254c82" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	LastName: payload01.LastName,
+	FirstName: payload01.FirstName,
+	Email: payload01.Email,
+	Phone:payload01.Phone
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create type="Contact" doc:id="db6124b4-1eaf-448c-b351-7e0202ad7f9b" config-ref="Salesforce_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="28e2fefe-7b39-419f-a755-217606b15f17" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="50c3995e-30cd-4a97-a6ca-66901ce4c1c6" config-ref="File_Config" path="D:\File\output\test.json"/>
+	</flow>
+</mule>
